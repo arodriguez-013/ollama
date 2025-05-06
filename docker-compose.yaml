@@ -1,0 +1,40 @@
+# Docker Compose stack to spin up ollama + open-webui locally
+
+services:
+  srv:
+    image: ollama/ollama:latest
+    tty: true
+    volumes:
+      - ./appdata/ollama:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - llamanet
+    hostname: ollama
+      # deploy:  # Nvidia GPU Support
+      # resources:
+      #   reservations:
+      #     devices:
+      #       - driver: nvidia
+      #         count: 1
+      #         capabilities: [gpu]
+    restart: unless-stopped
+
+  webui:
+    depends_on:
+      - srv
+    image: ghcr.io/open-webui/open-webui:ollama
+    volumes:
+      - ./appdata/webui:/app/backend/data
+    networks:
+      - llamanet
+    ports:
+      - 40080:8080
+    hostname: webui
+    env_file:
+      - webui.env
+    restart: unless-stopped
+
+networks:
+  llamanet:
+    driver: bridge
